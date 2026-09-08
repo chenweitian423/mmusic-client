@@ -1,0 +1,30 @@
+name: Build iOS (unsigned ipa)
+# 只保留手动触发:macOS runner 按 10 倍计费,每次约耗 30 分钟免费额度。
+# 需要出 ipa 时到 Actions 页面点 "Run workflow"。
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: stable
+      - run: bash build.sh --no-apk
+      - run: |
+          cd app_build
+          flutter build ios --release --no-codesign
+      - name: Package unsigned ipa
+        run: |
+          cd app_build/build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload/
+          zip -r mmusic-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mmusic-ios-unsigned
+          path: app_build/build/ios/iphoneos/mmusic-unsigned.ipa
+          retention-days: 30

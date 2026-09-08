@@ -1,0 +1,17 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+app_build/
+
+*.apk
+*.ipa
+*.aab
+*.iml
+pubspec.lock
+app_build/pubspec.lock
+
+.DS_Store
+Thumbs.db

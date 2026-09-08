@@ -1,0 +1,22 @@
+# 统一换行符。
+# 目的有二:
+#   1. 避免在 Windows 上编辑产生"纯 CRLF 的假 diff"(git status 显示改了一堆文件,实际内容没变)
+#   2. 避免 build.sh 哪天沾上 CRLF 导致 CI 报 "bash\r: No such file or directory" 这种极难排查的错
+* text=auto eol=lf
+
+# 必须是 LF,否则 Linux/macOS runner 上会出问题
+*.sh    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.dart  text eol=lf
+
+# Windows 批处理必须是 CRLF,否则可能执行异常
+*.bat   text eol=crlf
+
+# 二进制文件不做任何换行符转换
+*.apk   binary
+*.ipa   binary
+*.png   binary
+*.jpg   binary
+*.zip   binary
+*.keystore binary

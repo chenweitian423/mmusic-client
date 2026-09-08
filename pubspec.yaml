@@ -1,0 +1,35 @@
+name: mmusic_client
+description: mmusic 自建音乐服务手机客户端(网易云风格)
+publish_to: 'none'
+version: 1.0.14
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.7.0
+  just_audio: ^0.9.40
+  audio_service: ^0.18.15
+  audio_session: ^0.1.25
+  shared_preferences: ^2.3.2
+  cached_network_image: ^3.4.1
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon.png

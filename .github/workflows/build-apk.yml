@@ -1,0 +1,36 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: stable
+      # 快速静态检查:约 1 分钟内挡掉编译错误,避免白跑 10 分钟的完整构建。
+      # 只查 lib/(即真正会被编译进 App 的代码),且只有 error 级别才失败,
+      # warning / info 不阻塞构建,免得被历史遗留的风格问题卡住。
+      #
+      # 注意:这里是在仓库根目录跑,不是在 build.sh 生成的 app_build 里。
+      # 仓库根目录本身就是个合法的 Flutter 包(有 pubspec.yaml + lib/ + test/),
+      # 单元测试不需要 android/ios 目录,所以不必等 build.sh,也不必让 build.sh
+      # 去复制 test/(它第 20 行会 rm -rf "$WORK/test",那是给构建用的干净骨架,
+      # 让它带测试反而是多余的重复)。
+      - name: Analyze and test (fast pre-check)
+        run: |
+          flutter pub get
+          flutter analyze lib --no-fatal-infos --no-fatal-warnings
+          flutter test
+      - run: bash build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mmusic-apk
+          path: '*.apk'
+          # 默认 90 天会把 500MB 免费存储撑爆(一次约 17MB),缩短到 14 天
+          retention-days: 14

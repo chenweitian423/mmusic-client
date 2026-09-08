@@ -1,0 +1,136 @@
+name: Cleanup artifacts
+
+# 按「总容量」自动清理 artifact,给 retention-days 兜底。
+#
+# 为什么需要它:GitHub 只提供「保留天数」一个维度,没有「容量到线就清」的原生开关。
+# retention-days 是被动的——只要构建够频繁,14 天内照样能堆爆 500MB 免费额度
+# (APK 每个 17MB,一天两次 × 14 天 = 476MB,已经贴着上限了)。
+# 2026-08-14 之前就真的堆到过 486.29MB / 500MB(详见 AGENTS.md §6.6)。
+#
+# 触发时机:每次构建跑完之后 + 每周日兜底 + 随时手动。
+# 注意 workflow_run 只认默认分支上的本文件,所以这个文件必须先合进 main 才会生效。
+on:
+  workflow_run:
+    workflows: ["Build APK", "Build iOS (unsigned ipa)"]
+    types: [completed]
+  schedule:
+    # 每周日 20:00 UTC(北京时间周一 04:00)兜底扫一次,防止长期只手动跑 iOS 时漏清理
+    - cron: '0 20 * * 0'
+  workflow_dispatch:
+    inputs:
+      limit_mb:
+        description: '超过多少 MB 才开始清理'
+        required: false
+        default: '400'
+      target_mb:
+        description: '清理到多少 MB 以下'
+        required: false
+        default: '300'
+      dry_run:
+        description: '只报告不删除'
+        type: boolean
+        required: false
+        default: false
+
+# 删 artifact 需要 actions:write。用的是自动注入的 GITHUB_TOKEN,不需要任何 PAT,
+# 也就不受 fine-grained token 那套 scope 限制(§6.7 踩过的坑)。
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 按容量清理最旧的 artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          LIMIT_MB: ${{ github.event.inputs.limit_mb || '400' }}
+          TARGET_MB: ${{ github.event.inputs.target_mb || '300' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+
+          # 用 @tsv 逐条输出,避免 --paginate 多页 JSON 拼接的坑
+          gh api --paginate "repos/$REPO/actions/artifacts?per_page=100" \
+            -q '.artifacts[] | [.id, .size_in_bytes, (.expired|tostring), .created_at, .name] | @tsv' \
+            > /tmp/artifacts.tsv || true
+
+          python3 <<'PY' > /tmp/plan.txt
+          import os
+
+          MB = 1048576
+          limit  = float(os.environ["LIMIT_MB"])  * MB
+          target = float(os.environ["TARGET_MB"]) * MB
+
+          rows = []
+          with open("/tmp/artifacts.tsv", encoding="utf-8") as f:
+              for line in f:
+                  line = line.rstrip("\n")
+                  if not line:
+                      continue
+                  aid, size, expired, created, name = line.split("\t")
+                  # 已过期的不再占用配额,不参与统计也不用删
+                  if expired == "true":
+                      continue
+                  rows.append((int(aid), int(size), created, name))
+
+          total = sum(r[1] for r in rows)
+
+          # 保护:每种 artifact 名下最新的那一份永远不删,
+          # 否则极端情况下会把刚构建出来的 APK 一起清掉。
+          newest = {}
+          for r in rows:
+              if r[3] not in newest or r[2] > newest[r[3]][2]:
+                  newest[r[3]] = r
+          protected = {r[0] for r in newest.values()}
+
+          lines = [
+              f"当前未过期 artifact:{len(rows)} 个,合计 {total/MB:.2f} MB",
+              f"阈值:超过 {limit/MB:.0f} MB 时清理到 {target/MB:.0f} MB 以下",
+          ]
+
+          doomed = []
+          if total <= limit:
+              lines.append(f"结论:未超线,无需清理(还差 {(limit-total)/MB:.2f} MB 到阈值)")
+          else:
+              rows.sort(key=lambda r: r[2])          # created_at 升序,最旧的先删
+              freed = 0
+              for aid, size, created, name in rows:
+                  if total <= target:
+                      break
+                  if aid in protected:               # 跳过每种类型最新的一份
+                      continue
+                  doomed.append((aid, size, created, name))
+                  total -= size
+                  freed += size
+              lines.append(
+                  f"结论:超线,计划删除 {len(doomed)} 个,释放 {freed/MB:.2f} MB,"
+                  f"删后剩余 {total/MB:.2f} MB"
+              )
+              if total > target:
+                  lines.append(
+                      "⚠️ 受「保护最新一份」限制,删完仍高于目标值,属预期行为"
+                  )
+
+          with open("/tmp/delete_ids.txt", "w", encoding="utf-8") as f:
+              for aid, size, created, name in doomed:
+                  f.write(f"{aid}\n")
+                  lines.append(f"  - 删除 {aid} {name} {size/MB:.2f}MB 创建于 {created}")
+
+          print("\n".join(lines))
+          PY
+
+          cat /tmp/plan.txt
+          cat /tmp/plan.txt >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY_RUN=true,只报告不删除" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          while read -r id; do
+            [ -z "$id" ] && continue
+            echo "正在删除 artifact $id"
+            gh api -X DELETE "repos/$REPO/actions/artifacts/$id"
+          done < /tmp/delete_ids.txt
