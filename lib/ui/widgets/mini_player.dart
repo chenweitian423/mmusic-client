@@ -49,7 +49,8 @@ class MiniPlayer extends StatelessWidget {
                 pageBuilder: (_, a, __) => const PlayerPage(),
                 transitionsBuilder: (_, a, __, child) => SlideTransition(
                   position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-                      .animate(CurvedAnimation(parent: a, curve: Curves.easeOut)),
+                      .animate(
+                          CurvedAnimation(parent: a, curve: Curves.easeOut)),
                   child: child,
                 ),
               ));
@@ -120,8 +121,9 @@ class MiniPlayer extends StatelessWidget {
                               size: 32,
                               color: Colors.black87,
                             ),
-                            onPressed: () =>
-                                playing ? musicHandler.pause() : musicHandler.play(),
+                            onPressed: () => playing
+                                ? musicHandler.pause()
+                                : musicHandler.play(),
                           );
                         },
                       );
@@ -260,19 +262,19 @@ void showQueueSheet(BuildContext context) {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        tooltip:
-                                            cached ? '删除本地缓存' : '缓存到手机',
+                                        tooltip: cached ? '删除本地缓存' : '缓存到手机',
                                         icon: Icon(
                                           cached
                                               ? Icons.download_done_rounded
-                                              : Icons.download_for_offline_outlined,
+                                              : Icons
+                                                  .download_for_offline_outlined,
                                           size: 20,
                                           color: cached
                                               ? kRed
                                               : Colors.grey.shade500,
                                         ),
-                                        onPressed: () =>
-                                            _toggleQueueCache(context, s, cached),
+                                        onPressed: () => _toggleQueueCache(
+                                            context, s, cached),
                                       ),
                                       IconButton(
                                         tooltip: '添加到歌单',
@@ -290,7 +292,8 @@ void showQueueSheet(BuildContext context) {
                                           size: 18,
                                           color: Colors.grey.shade400,
                                         ),
-                                        onPressed: () => musicHandler.removeAt(i),
+                                        onPressed: () =>
+                                            musicHandler.removeAt(i),
                                       ),
                                     ],
                                   ),

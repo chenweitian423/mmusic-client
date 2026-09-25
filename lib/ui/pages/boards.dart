@@ -124,15 +124,15 @@ class _BoardListState extends State<_BoardList>
             borderRadius: BorderRadius.circular(10),
           ),
           child: ListTile(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             leading: Container(
               width: 42,
               height: 42,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    kRed.withOpacity(0.55 + (i % 5) * 0.09),
+                    kRed.withValues(alpha: 0.55 + (i % 5) * 0.09),
                     kRed,
                   ],
                   begin: Alignment.topLeft,
@@ -153,8 +153,8 @@ class _BoardListState extends State<_BoardList>
             title: Text(b.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w500)),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
             trailing:
                 const Icon(Icons.chevron_right_rounded, color: Colors.grey),
             onTap: () {

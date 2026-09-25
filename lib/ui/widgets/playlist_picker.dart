@@ -58,7 +58,8 @@ Future<void> showAddToPlaylistSheet(BuildContext pageContext, Song song) async {
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                     child: Text(
                       '还没有歌单，点右上角新建一个',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade500),
                     ),
                   )
                 else
@@ -73,7 +74,7 @@ Future<void> showAddToPlaylistSheet(BuildContext pageContext, Song song) async {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: kRed.withOpacity(0.1),
+                              color: kRed.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(

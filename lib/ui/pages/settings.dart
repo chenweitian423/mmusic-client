@@ -61,14 +61,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
                   child: Text('播放音质',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
                   child: Text('获取失败时会自动降级到其他音质',
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade500)),
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 ),
                 for (final q in _qualities)
                   RadioListTile<String>(

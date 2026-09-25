@@ -63,14 +63,18 @@ void main() {
       'source': 'tx',
     });
 
-    final bodies = mediaSourceBodies(song, '320', 'plugin-hash-value-that-is-long');
+    final bodies =
+        mediaSourceBodies(song, '320', 'plugin-hash-value-that-is-long');
 
-    expect(bodies.first['musicItem']['source'], 'plugin-hash-value-that-is-long');
+    expect(
+        bodies.first['musicItem']['source'], 'plugin-hash-value-that-is-long');
     expect(bodies.first['musicItem']['_plugin_hash'],
         'plugin-hash-value-that-is-long');
   });
 
-  test('sourceCandidatesForSong does not fall back to raw source when plugin matches', () {
+  test(
+      'sourceCandidatesForSong does not fall back to raw source when plugin matches',
+      () {
     final song = Song.fromJson({
       'id': '7077187',
       'name': 'Test Song',
@@ -80,7 +84,8 @@ void main() {
     final plugins = [
       PluginInfo(
         platform: '元力KW',
-        hash: 'b0f998e4eee24bd950e950c7739f9b2c6714f5413b0924841d0635e65d62b5ae',
+        hash:
+            'b0f998e4eee24bd950e950c7739f9b2c6714f5413b0924841d0635e65d62b5ae',
         searchTypes: const ['music'],
       ),
     ];
@@ -93,7 +98,8 @@ void main() {
   // 服务端不提供 hash ↔ 短码映射,只能靠插件名模糊匹配(AGENTS.md §3.2)。
   // 实测的「元力KW / 元力WY」自带英文短码,只匹配英文也能碰巧跑通;
   // 但换成纯中文命名的插件就会静默退回内置 zypt 源。下面两个用例把两种命名都钉住。
-  test('pluginMatchesSource matches plugins named with the latin short code', () {
+  test('pluginMatchesSource matches plugins named with the latin short code',
+      () {
     expect(pluginMatchesSource(_plugin('元力KW'), 'kw'), isTrue);
     expect(pluginMatchesSource(_plugin('元力WY'), 'wy'), isTrue);
     expect(pluginMatchesSource(_plugin('元力KW'), 'wy'), isFalse);
@@ -210,7 +216,8 @@ void main() {
       'id': '237016753',
       'name': '不再流浪',
       'artist': '周深',
-      'source': '4dc6735a06062d0910e07ee01ff327a7221c9d544f02ab8339dd343a158fe4a1',
+      'source':
+          '4dc6735a06062d0910e07ee01ff327a7221c9d544f02ab8339dd343a158fe4a1',
       'songmid': '001xwUwW32VflK',
       'albumName': '电影《罗小黑战记2》',
       'types': [

@@ -17,6 +17,10 @@ jobs:
       # 只查 lib/(即真正会被编译进 App 的代码),且只有 error 级别才失败,
       # warning / info 不阻塞构建,免得被历史遗留的风格问题卡住。
       #
+      # 2026-09-25 起基线已是 `No issues found!`(补上 analysis_options.yaml 后
+      # 清完了全部存量告警),所以往后任何一条新告警都值得看一眼。
+      # 想收紧成严格模式,把下面两个 --no-fatal-* 去掉即可。
+      #
       # 注意:这里是在仓库根目录跑,不是在 build.sh 生成的 app_build 里。
       # 仓库根目录本身就是个合法的 Flutter 包(有 pubspec.yaml + lib/ + test/),
       # 单元测试不需要 android/ios 目录,所以不必等 build.sh,也不必让 build.sh
@@ -24,9 +28,19 @@ jobs:
       # 让它带测试反而是多余的重复)。
       - name: Analyze and test (fast pre-check)
         run: |
-          flutter pub get
+          # --enforce-lockfile:pubspec.lock 已入库,这里强制按它解析依赖。
+          # 谁改了 pubspec.yaml 却忘了提交新的 lock,这一步会立刻报错,
+          # 而不是悄悄换一套版本号把构建"修好"。
+          flutter pub get --enforce-lockfile
           flutter analyze lib --no-fatal-infos --no-fatal-warnings
           flutter test
+      # 格式卡口。加这道之前必须先在本地跑过一次 `dart format lib test`
+      # 并把结果提交,否则第一次 push 就会红。
+      # 用 --output=none 只检查不改文件,--set-exit-if-changed 让有差异时退出码非 0。
+      # 若将来 Dart 升级导致格式化风格整体变动而卡住构建,直接注释掉这一步即可,
+      # 不影响后面的 analyze / test / 打包。
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
       - run: bash build.sh
       - uses: actions/upload-artifact@v4
         with:

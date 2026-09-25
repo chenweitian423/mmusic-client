@@ -59,7 +59,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                child: Container(color: Colors.black.withOpacity(0.55)),
+                child: Container(color: Colors.black.withValues(alpha: 0.55)),
               ),
               SafeArea(
                 child: Column(
@@ -127,9 +127,8 @@ class _PlayerPageState extends State<PlayerPage> {
                             margin: const EdgeInsets.symmetric(horizontal: 3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: i == _page
-                                  ? Colors.white70
-                                  : Colors.white24,
+                              color:
+                                  i == _page ? Colors.white70 : Colors.white24,
                             ),
                           ),
                       ],
@@ -167,8 +166,8 @@ class _DiscViewState extends State<_DiscView>
   @override
   void initState() {
     super.initState();
-    _rot = AnimationController(
-        vsync: this, duration: const Duration(seconds: 24));
+    _rot =
+        AnimationController(vsync: this, duration: const Duration(seconds: 24));
     _sub = musicHandler.player.playingStream.listen((playing) {
       if (!mounted) return;
       if (playing) {
@@ -197,7 +196,7 @@ class _DiscViewState extends State<_DiscView>
           height: size + 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.black.withOpacity(0.65),
+            color: Colors.black.withValues(alpha: 0.65),
             border: Border.all(color: Colors.white10, width: 4),
           ),
           child: Center(
@@ -392,13 +391,14 @@ class _QualityButtonState extends State<_QualityButton> {
                 const Padding(
                   padding: EdgeInsets.all(14),
                   child: Text('播放音质(切歌后生效)',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
                 for (final e in _labels.entries)
                   ListTile(
                     title: Center(
-                        child: Text('${e.value} ${e.key == "999" ? "FLAC" : "${e.key}k"}',
+                        child: Text(
+                            '${e.value} ${e.key == "999" ? "FLAC" : "${e.key}k"}',
                             style: TextStyle(
                                 fontSize: 14,
                                 color: settings.quality == e.key
@@ -462,16 +462,16 @@ class _ProgressBarState extends State<_ProgressBar> {
               child: Row(
                 children: [
                   Text(_fmt(position),
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 11)),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 11)),
                   Expanded(
                     child: SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                         trackHeight: 2,
-                        thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 5),
-                        overlayShape: const RoundSliderOverlayShape(
-                            overlayRadius: 12),
+                        thumbShape:
+                            const RoundSliderThumbShape(enabledThumbRadius: 5),
+                        overlayShape:
+                            const RoundSliderOverlayShape(overlayRadius: 12),
                         activeTrackColor: Colors.white,
                         inactiveTrackColor: Colors.white24,
                         thumbColor: Colors.white,
@@ -484,16 +484,15 @@ class _ProgressBarState extends State<_ProgressBar> {
                             ? (v) => setState(() => _dragValue = v)
                             : null,
                         onChangeEnd: (v) {
-                          musicHandler
-                              .seek(Duration(milliseconds: v.round()));
+                          musicHandler.seek(Duration(milliseconds: v.round()));
                           _dragValue = null;
                         },
                       ),
                     ),
                   ),
                   Text(_fmt(duration),
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 11)),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 11)),
                 ],
               ),
             );

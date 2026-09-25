@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/api.dart';
@@ -19,8 +19,7 @@ class _ServerSetupPageState extends State<ServerSetupPage> {
   @override
   void initState() {
     super.initState();
-    _ctrl = TextEditingController(
-        text: settings.serverUrl);
+    _ctrl = TextEditingController(text: settings.serverUrl);
   }
 
   @override
@@ -90,8 +89,7 @@ class _ServerSetupPageState extends State<ServerSetupPage> {
               ),
               if (_error.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(_error,
-                    style: const TextStyle(color: kRed, fontSize: 13)),
+                Text(_error, style: const TextStyle(color: kRed, fontSize: 13)),
               ],
               const SizedBox(height: 24),
               SizedBox(
@@ -120,4 +118,3 @@ class _ServerSetupPageState extends State<ServerSetupPage> {
     );
   }
 }
-

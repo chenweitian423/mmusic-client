@@ -25,7 +25,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('local playlist stores songs in most-recent-first order without duplicates',
+  test(
+      'local playlist stores songs in most-recent-first order without duplicates',
       () async {
     final store = LocalPlaylistsStore();
     await store.init();

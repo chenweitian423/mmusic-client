@@ -1,4 +1,5 @@
 /// 数据模型:统一 zypt 聚合源与 MusicFree 插件两种返回结构。
+library;
 
 String _s(dynamic v) => v == null ? '' : v.toString();
 
@@ -60,8 +61,9 @@ class Song {
       }
     }
     final id = _s(j['id']).isNotEmpty ? _s(j['id']) : _s(j['songmid']);
-    final source =
-        _s(j['_plugin_hash']).isNotEmpty ? _s(j['_plugin_hash']) : _s(j['source']);
+    final source = _s(j['_plugin_hash']).isNotEmpty
+        ? _s(j['_plugin_hash'])
+        : _s(j['source']);
     return Song(
       id: id,
       title: _s(j['title']).isNotEmpty ? _s(j['title']) : _s(j['name']),
@@ -69,8 +71,9 @@ class Song {
       album: _s(j['album']).isNotEmpty ? _s(j['album']) : _s(j['albumName']),
       artwork: artwork,
       source: source,
-      platform:
-          _s(j['platform']).isNotEmpty ? _s(j['platform']) : zyptName(_s(j['source'])),
+      platform: _s(j['platform']).isNotEmpty
+          ? _s(j['platform'])
+          : zyptName(_s(j['source'])),
       interval: _s(j['interval']),
       qualities: qualities,
       raw: Map<String, dynamic>.from(j),
@@ -138,8 +141,9 @@ class Sheet {
       artwork: artwork,
       playCount: _s(j['playCount']),
       description: _s(j['description']),
-      source:
-          _s(j['_plugin_hash']).isNotEmpty ? _s(j['_plugin_hash']) : _s(j['source']),
+      source: _s(j['_plugin_hash']).isNotEmpty
+          ? _s(j['_plugin_hash'])
+          : _s(j['source']),
       platform: _s(j['platform']),
       raw: Map<String, dynamic>.from(j),
     );
@@ -165,7 +169,8 @@ class PluginInfo {
   final String hash;
   final List<String> searchTypes;
 
-  PluginInfo({required this.platform, required this.hash, required this.searchTypes});
+  PluginInfo(
+      {required this.platform, required this.hash, required this.searchTypes});
 
   factory PluginInfo.fromJson(Map<String, dynamic> j) => PluginInfo(
         platform: _s(j['platform']),
@@ -181,7 +186,8 @@ Duration? parseInterval(String s) {
   final parts = s.split(':');
   try {
     if (parts.length == 2) {
-      return Duration(minutes: int.parse(parts[0]), seconds: int.parse(parts[1]));
+      return Duration(
+          minutes: int.parse(parts[0]), seconds: int.parse(parts[1]));
     }
     if (parts.length == 3) {
       return Duration(

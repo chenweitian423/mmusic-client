@@ -70,7 +70,8 @@ class SongTile extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    border: Border.all(color: kRed.withOpacity(0.6), width: 0.8),
+                    border: Border.all(
+                        color: kRed.withValues(alpha: 0.6), width: 0.8),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
@@ -82,7 +83,9 @@ class SongTile extends StatelessWidget {
               ],
               Expanded(
                 child: Text(
-                  song.album.isEmpty ? song.artist : '${song.artist} 路 ${song.album}',
+                  song.album.isEmpty
+                      ? song.artist
+                      : '${song.artist} 路 ${song.album}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -189,14 +192,14 @@ class _SongMenu extends StatelessWidget {
                 ],
               ),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'playlist',
               child: Row(
                 children: [
-                  const Icon(Icons.library_music_rounded,
+                  Icon(Icons.library_music_rounded,
                       size: 20, color: Colors.black54),
-                  const SizedBox(width: 10),
-                  const Text('添加到歌单'),
+                  SizedBox(width: 10),
+                  Text('添加到歌单'),
                 ],
               ),
             ),

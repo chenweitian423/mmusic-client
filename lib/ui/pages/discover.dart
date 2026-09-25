@@ -120,14 +120,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         child: CircularProgressIndicator(color: kRed))
                     : _sheets!.isEmpty
                         ? Center(
-                            child: Text(
-                                _sheetError.isEmpty ? '暂无歌单' : '加载失败',
-                                style:
-                                    TextStyle(color: Colors.grey.shade500)))
+                            child: Text(_sheetError.isEmpty ? '暂无歌单' : '加载失败',
+                                style: TextStyle(color: Colors.grey.shade500)))
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             itemCount: _sheets!.length,
                             itemBuilder: (context, i) =>
                                 _SheetCard(sheet: _sheets![i]),
@@ -171,8 +168,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             ),
                             title: Text(b.name,
                                 style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500)),
+                                    fontSize: 15, fontWeight: FontWeight.w500)),
                             subtitle: const Text('网易云',
                                 style: TextStyle(fontSize: 12)),
                             trailing: const Icon(Icons.chevron_right_rounded,
@@ -182,8 +178,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                                 builder: (_) => SongListPage(
                                   title: b.name,
                                   showIndex: true,
-                                  loader: () =>
-                                      api.boardSongs('wy', b.bangid),
+                                  loader: () => api.boardSongs('wy', b.bangid),
                                 ),
                               ));
                             },

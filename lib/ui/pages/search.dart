@@ -40,8 +40,7 @@ class _SearchPageState extends State<SearchPage> {
     super.initState();
     _loadSources();
     _scroll.addListener(() {
-      if (_scroll.position.pixels >
-          _scroll.position.maxScrollExtent - 300) {
+      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 300) {
         _loadMore();
       }
     });
@@ -163,8 +162,8 @@ class _SearchPageState extends State<SearchPage> {
         actions: [
           TextButton(
             onPressed: _search,
-            child: const Text('搜索',
-                style: TextStyle(color: kRed, fontSize: 15)),
+            child:
+                const Text('搜索', style: TextStyle(color: kRed, fontSize: 15)),
           ),
         ],
       ),
@@ -233,15 +232,15 @@ class _SearchPageState extends State<SearchPage> {
               itemBuilder: (context, i) {
                 final selected = i == _optIndex;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 4, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
                   child: ChoiceChip(
                     label: Text(_options[i].label,
                         style: TextStyle(
                             fontSize: 12,
                             color: selected ? kRed : Colors.black54)),
                     selected: selected,
-                    selectedColor: kRed.withOpacity(0.1),
+                    selectedColor: kRed.withValues(alpha: 0.1),
                     backgroundColor: const Color(0xFFF2F3F5),
                     showCheckmark: false,
                     side: BorderSide(
@@ -282,14 +281,12 @@ class _SearchPageState extends State<SearchPage> {
     }
     if (!_searched) {
       return Center(
-        child: Text('输入关键词开始搜索',
-            style: TextStyle(color: Colors.grey.shade400)),
+        child: Text('输入关键词开始搜索', style: TextStyle(color: Colors.grey.shade400)),
       );
     }
     if (_results.isEmpty) {
       return Center(
-        child:
-            Text('没有找到相关歌曲', style: TextStyle(color: Colors.grey.shade500)),
+        child: Text('没有找到相关歌曲', style: TextStyle(color: Colors.grey.shade500)),
       );
     }
     return ListView.builder(
@@ -302,8 +299,8 @@ class _SearchPageState extends State<SearchPage> {
             child: Center(
               child: _noMore
                   ? Text('没有更多了',
-                      style: TextStyle(
-                          color: Colors.grey.shade400, fontSize: 12))
+                      style:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 12))
                   : const SizedBox(
                       width: 20,
                       height: 20,

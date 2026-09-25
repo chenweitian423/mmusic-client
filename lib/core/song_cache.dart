@@ -55,7 +55,7 @@ class SongCacheStore {
 
   Future<String?> localPath(Song song) async {
     final file = await _findFile(song);
-    return file == null ? null : file.path;
+    return file?.path;
   }
 
   Future<void> refresh() async {

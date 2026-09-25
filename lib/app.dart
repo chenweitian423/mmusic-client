@@ -113,7 +113,8 @@ class _GateState extends State<Gate> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.cloud_off_rounded, size: 56, color: Colors.grey),
+                  const Icon(Icons.cloud_off_rounded,
+                      size: 56, color: Colors.grey),
                   const SizedBox(height: 12),
                   Text(_error,
                       textAlign: TextAlign.center,

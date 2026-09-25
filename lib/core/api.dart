@@ -52,7 +52,15 @@ List<Song> deepFindSongs(dynamic d, [int depth = 0]) {
     return [];
   }
   if (d is Map) {
-    for (final k in ['playlist', 'list', 'songs', 'results', 'data', 'musics', 'tracks']) {
+    for (final k in [
+      'playlist',
+      'list',
+      'songs',
+      'results',
+      'data',
+      'musics',
+      'tracks'
+    ]) {
       if (d.containsKey(k)) {
         final r = deepFindSongs(d[k], depth + 1);
         if (r.isNotEmpty) return r;
@@ -82,7 +90,13 @@ String extractPlayableUrl(dynamic data, [int depth = 0]) {
       final url = extractPlayableUrl(m[key], depth + 1);
       if (url.isNotEmpty) return url;
     }
-    for (final key in ['data', 'result', 'mediaSource', 'source', 'musicSource']) {
+    for (final key in [
+      'data',
+      'result',
+      'mediaSource',
+      'source',
+      'musicSource'
+    ]) {
       final url = extractPlayableUrl(m[key], depth + 1);
       if (url.isNotEmpty) return url;
     }
@@ -281,7 +295,9 @@ class Api {
     final out = <PluginInfo>[];
     if (data['plugins'] is List) {
       for (final e in data['plugins']) {
-        if (e is Map) out.add(PluginInfo.fromJson(Map<String, dynamic>.from(e)));
+        if (e is Map) {
+          out.add(PluginInfo.fromJson(Map<String, dynamic>.from(e)));
+        }
       }
     }
     _pluginCache = out;
@@ -370,7 +386,6 @@ class Api {
     return [song.source];
   }
 
-
   Future<String> _playUrlViaMediaSource(
     Song song,
     String source,
@@ -435,8 +450,8 @@ class Api {
   // ---------- 排行榜 ----------
 
   Future<List<Board>> boards(String source) async {
-    final r = await _dio.get('/api/leaderboard/boards',
-        queryParameters: {'source': source});
+    final r = await _dio
+        .get('/api/leaderboard/boards', queryParameters: {'source': source});
     if (r.statusCode != 200) throw ApiException('获取榜单失败(${r.statusCode})');
     final out = <Board>[];
     final list = asMap(r.data)['boards'];
@@ -472,7 +487,8 @@ class Api {
     return sheet.source;
   }
 
-  Future<List<Song>> sheetDetail(Sheet sheet, {int page = 1, int limit = 200}) async {
+  Future<List<Song>> sheetDetail(Sheet sheet,
+      {int page = 1, int limit = 200}) async {
     final r = await _dio.get('/api/playlist/detail', queryParameters: {
       'playlist_id': sheet.id,
       'source': _detailSource(sheet),

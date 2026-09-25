@@ -81,9 +81,9 @@ class _MinePageState extends State<MinePage> {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    backgroundColor: kRed.withOpacity(0.12),
-                    child: const Icon(Icons.person_rounded,
-                        color: kRed, size: 30),
+                    backgroundColor: kRed.withValues(alpha: 0.12),
+                    child:
+                        const Icon(Icons.person_rounded, color: kRed, size: 30),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -172,8 +172,7 @@ class _MinePageState extends State<MinePage> {
                           children: [
                             const Text('我的歌单',
                                 style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600)),
+                                    fontSize: 15, fontWeight: FontWeight.w600)),
                             const Spacer(),
                             IconButton(
                               icon: const Icon(Icons.add_rounded, color: kRed),
@@ -197,7 +196,7 @@ class _MinePageState extends State<MinePage> {
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: kRed.withOpacity(0.12),
+                                color: kRed.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(Icons.library_music_rounded,
@@ -220,8 +219,8 @@ class _MinePageState extends State<MinePage> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('删除歌单'),
-                                    content:
-                                        Text('确定删除“${playlist.name}”吗？歌曲文件不会被删除。'),
+                                    content: Text(
+                                        '确定删除“${playlist.name}”吗？歌曲文件不会被删除。'),
                                     actions: [
                                       TextButton(
                                           onPressed: () =>
@@ -289,11 +288,11 @@ class _MinePageState extends State<MinePage> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: kRed.withOpacity(0.12),
+                        color: kRed.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.download_done_rounded,
-                          color: kRed),
+                      child:
+                          const Icon(Icons.download_done_rounded, color: kRed),
                     ),
                     title: const Text('本地缓存',
                         style: TextStyle(
@@ -336,8 +335,8 @@ class _MinePageState extends State<MinePage> {
                   if (_collections == null)
                     const Padding(
                       padding: EdgeInsets.all(20),
-                      child: Center(
-                          child: CircularProgressIndicator(color: kRed)),
+                      child:
+                          Center(child: CircularProgressIndicator(color: kRed)),
                     )
                   else if (_collections!.isEmpty)
                     Padding(
@@ -350,8 +349,8 @@ class _MinePageState extends State<MinePage> {
                     for (final c in _collections!)
                       ListTile(
                         dense: true,
-                        leading: const Icon(Icons.queue_music_rounded,
-                            color: kRed),
+                        leading:
+                            const Icon(Icons.queue_music_rounded, color: kRed),
                         title: Text(
                           _str(c, ['name', 'title', 'filename']),
                           maxLines: 1,
@@ -396,8 +395,7 @@ class _MinePageState extends State<MinePage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消')),
+              onPressed: () => Navigator.pop(context), child: const Text('取消')),
           TextButton(
               onPressed: () => Navigator.pop(context, ctrl.text),
               child: const Text('创建')),

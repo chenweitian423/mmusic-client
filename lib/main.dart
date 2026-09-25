@@ -19,7 +19,7 @@ Future<void> main() async {
   await searchHistory.init();
   api.configure();
   final session = await AudioSession.instance;
-  await session.configure(AudioSessionConfiguration.music());
+  await session.configure(const AudioSessionConfiguration.music());
   musicHandler = await AudioService.init(
     builder: () => MusicHandler(),
     config: const AudioServiceConfig(

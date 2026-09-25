@@ -1,0 +1,21 @@
+# 静态分析规则集。
+#
+# 为什么需要这个文件：pubspec.yaml 里早就声明了 dev_dependencies.flutter_lints,
+# 但缺了本文件,规则集从未被 include,分析器一直在用 Dart 的默认规则。
+#
+# ⚠️ 与 CI 的联动:  `.github/workflows/build-apk.yml` 里跑的是
+#      flutter analyze lib --no-fatal-infos --no-fatal-warnings
+#    即只有 error 级别才阻塞构建,warning / info 只打印不拦。
+#    改成严格模式(--fatal-warnings)之前,必须先确认存量告警已清零。
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    # app_build/ 是 build.sh 每次生成的构建骨架(lib/ 的完整副本),
+    # 分析它等于把同一批文件查两遍,还会产生重复的告警行。
+    - app_build/**
+    # 平台目录只在 app_build/ 内部被 flutter create 生成,仓库根目录没有,
+    # 这里预先排掉,免得将来本地跑过构建后误纳入分析范围。
+    - android/**
+    - ios/**

@@ -10,8 +10,11 @@ app_build/
 *.ipa
 *.aab
 *.iml
-pubspec.lock
-app_build/pubspec.lock
+
+# pubspec.lock 必须提交进仓库(不要重新加回忽略):CI 靠它锁定依赖版本。
+# 历史上 4f7cac4 那次两次构建全挂在 pub 依赖求解上
+# (just_audio ^0.9.40 要 audio_session ^0.1.x,而 pubspec 写的 ^0.2.4)。
+# app_build/ 整个目录已被上面的规则忽略,不需要再单列。
 
 .DS_Store
 Thumbs.db

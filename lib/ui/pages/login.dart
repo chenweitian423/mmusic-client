@@ -111,8 +111,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               if (_error.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(_error,
-                    style: const TextStyle(color: kRed, fontSize: 13)),
+                Text(_error, style: const TextStyle(color: kRed, fontSize: 13)),
               ],
               const SizedBox(height: 24),
               SizedBox(

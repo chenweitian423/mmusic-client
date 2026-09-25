@@ -9,8 +9,7 @@ class Settings {
     _sp = await SharedPreferences.getInstance();
   }
 
-  String get serverUrl =>
-      _sp.getString('serverUrl') ?? defaultServerUrl;
+  String get serverUrl => _sp.getString('serverUrl') ?? defaultServerUrl;
   Future<void> setServerUrl(String v) async {
     var url = v.trim();
     if (url.isEmpty) return;
