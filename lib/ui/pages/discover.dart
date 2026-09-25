@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
-import '../../core/api.dart';
 import '../../core/models.dart';
 import '../../core/sources.dart';
 import '../widgets/cover.dart';
@@ -21,6 +20,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   List<Sheet>? _sheets;
   List<Board>? _boards;
   String _sheetError = '';
+
+  /// "当前音源里没有插件支持歌单搜索" —— 与"加载失败"区分开：
+  /// 前者是能力缺失（正常），后者是出错了（需要排查）。
+  bool _noSheetSupport = false;
   String _keyword = '';
 
   static const _keywords = ['热门', '流行', '华语', '经典', '治愈', '欧美', '轻音乐'];
@@ -36,23 +39,31 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _sheets = null;
       _boards = null;
       _sheetError = '';
+      _noSheetSupport = false;
     });
     _keyword = _keywords[Random().nextInt(_keywords.length)];
-    // 推荐歌单:找一个支持歌单搜索的插件
+    // 推荐歌单:找一个支持歌单搜索的插件。
+    // 注意"没有插件支持歌单搜索"**不是错误** —— 内置源里很可能只装了搜歌的插件，
+    // 这时候该显示"暂无歌单"，而不是给用户一个"加载失败"（那是误报）。
     () async {
       try {
         final plugins = await musicSource.plugins();
-        final p = plugins.firstWhere(
-          (e) => e.searchTypes.contains('sheet'),
-          orElse: () => plugins.isNotEmpty
-              ? plugins.first
-              : PluginInfo(platform: '', hash: '', searchTypes: const []),
-        );
-        if (p.hash.isEmpty) {
-          throw ApiException(isEmbeddedMode ? '没有可用的内置插件' : '服务器没有可用插件');
+        final candidates = [
+          for (final e in plugins)
+            if (e.searchTypes.contains('sheet')) e,
+        ];
+        if (candidates.isEmpty) {
+          if (mounted) {
+            setState(() {
+              _sheets = [];
+              _sheetError = '';
+              _noSheetSupport = true;
+            });
+          }
+          return;
         }
-        final sheets =
-            await musicSource.searchSheets(_keyword, pluginHash: p.hash);
+        final sheets = await musicSource.searchSheets(_keyword,
+            pluginHash: candidates.first.hash);
         if (mounted) setState(() => _sheets = sheets);
       } catch (e) {
         if (mounted) {
@@ -124,7 +135,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         child: CircularProgressIndicator(color: kRed))
                     : _sheets!.isEmpty
                         ? Center(
-                            child: Text(_sheetError.isEmpty ? '暂无歌单' : '加载失败',
+                            child: Text(
+                                _noSheetSupport
+                                    ? '当前音源不支持歌单搜索'
+                                    : (_sheetError.isEmpty ? '暂无歌单' : '加载失败'),
                                 style: TextStyle(color: Colors.grey.shade500)))
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
