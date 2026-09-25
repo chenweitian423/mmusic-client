@@ -399,8 +399,12 @@ class Api {
   Map<String, String> get imageHeaders =>
       settings.authCookie.isEmpty ? {} : {'Cookie': settings.authCookie};
 
-  String proxyImage(String url) =>
-      '${settings.serverUrl}/proxy-image?url=${Uri.encodeComponent(url)}';
+  /// 封面代理地址。**没有配服务端时返回空串** —— 内置源模式下没有 NAS 可代理，
+  /// 返回一个 `'${''}/proxy-image?...'` 会让每个封面都去请求一个不存在的相对地址，
+  /// 白白产生一堆失败请求与红字日志。
+  String proxyImage(String url) => settings.serverUrl.isEmpty
+      ? ''
+      : '${settings.serverUrl}/proxy-image?url=${Uri.encodeComponent(url)}';
 
   // ---------- 连接 / 认证 ----------
 

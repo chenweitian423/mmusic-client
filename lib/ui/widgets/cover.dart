@@ -30,15 +30,22 @@ class Cover extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
         placeholder: (_, __) => placeholder,
-        errorWidget: (_, __, ___) => CachedNetworkImage(
-          imageUrl: api.proxyImage(url),
-          httpHeaders: api.imageHeaders,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => placeholder,
-          errorWidget: (_, __, ___) => placeholder,
-        ),
+        errorWidget: (_, __, ___) {
+          // 直连失败 → 试服务端代理（有的图床有防盗链）。
+          // 内置源模式没有服务端，[api.proxyImage] 会返回空串，这时直接落占位图 ——
+          // 别去请求一个不存在的地址。
+          final proxied = api.proxyImage(url);
+          if (proxied.isEmpty) return placeholder;
+          return CachedNetworkImage(
+            imageUrl: proxied,
+            httpHeaders: api.imageHeaders,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => placeholder,
+            errorWidget: (_, __, ___) => placeholder,
+          );
+        },
       );
     }
     return ClipRRect(

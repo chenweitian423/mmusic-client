@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
-import '../../core/api.dart';
 import '../../core/models.dart';
+import '../../core/sources.dart';
 import 'song_list_page.dart';
 
 class BoardsPage extends StatefulWidget {
@@ -16,10 +16,25 @@ class _BoardsPageState extends State<BoardsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
 
+  /// 当前模式**真正有音源**的平台。
+  ///
+  /// 内置源下只装了酷我/网易插件时，硬摆一个「QQ音乐」标签页，点进去必然报错 ——
+  /// 那不是"功能齐全"，那是骗用户。所以按可用插件过滤。
+  late final List<String> _sources = _availableSources();
+
+  static List<String> _availableSources() {
+    if (!isEmbeddedMode) return zyptSources;
+    final out = [
+      for (final c in zyptSources)
+        if (embeddedSource.hasSourceCode(c)) c,
+    ];
+    return out.isEmpty ? zyptSources : out;
+  }
+
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: zyptSources.length, vsync: this);
+    _tabCtrl = TabController(length: _sources.length, vsync: this);
   }
 
   @override
@@ -41,12 +56,12 @@ class _BoardsPageState extends State<BoardsPage>
           indicatorColor: kRed,
           indicatorSize: TabBarIndicatorSize.label,
           tabAlignment: TabAlignment.start,
-          tabs: [for (final s in zyptSources) Tab(text: zyptName(s))],
+          tabs: [for (final s in _sources) Tab(text: zyptName(s))],
         ),
       ),
       body: TabBarView(
         controller: _tabCtrl,
-        children: [for (final s in zyptSources) _BoardList(source: s)],
+        children: [for (final s in _sources) _BoardList(source: s)],
       ),
     );
   }
@@ -80,7 +95,7 @@ class _BoardListState extends State<_BoardList>
       _error = '';
     });
     try {
-      final boards = await api.boards(widget.source);
+      final boards = await musicSource.boards(widget.source);
       if (!mounted) return;
       setState(() => _boards = boards);
     } catch (e) {
@@ -162,7 +177,7 @@ class _BoardListState extends State<_BoardList>
                 builder: (_) => SongListPage(
                   title: b.name,
                   showIndex: true,
-                  loader: () => api.boardSongs(widget.source, b.bangid),
+                  loader: () => musicSource.boardSongs(widget.source, b.bangid),
                 ),
               ));
             },

@@ -19,11 +19,17 @@ fi
 echo "==> [2/5] 注入应用源码"
 rm -rf "$WORK/lib" "$WORK/assets" "$WORK/test"
 cp -r "$SRC/lib" "$WORK/lib"
-mkdir -p "$WORK/assets"
-cp "$SRC/assets/icon.png" "$WORK/assets/icon.png"
+# ★ 整个 assets/ 都要拷（内置源需要 assets/js 宿主环境 + assets/gen 依赖产物
+#   + assets/plugins 随包插件）。早期这里只拷了 icon.png,内置源一上来就缺资源。
+cp -r "$SRC/assets" "$WORK/assets"
 cp "$SRC/pubspec.yaml" "$WORK/pubspec.yaml"
 mkdir -p "$WORK/tool"
 cp "$SRC/tool/patch_platform.dart" "$WORK/tool/patch_platform.dart"
+
+# 随包插件是可选的（.js 被 .gitignore 忽略）：有就带上，没有就打出个空插件包，
+# 用户在 App 里导入即可。这里如实报个数，免得事后怀疑"是不是没打进去"。
+BUILTIN_PLUGINS="$(find "$SRC/assets/plugins" -name '*.js' 2>/dev/null | wc -l | tr -d ' ')"
+echo "    随包插件:$BUILTIN_PLUGINS 个$( [ "$BUILTIN_PLUGINS" = "0" ] && echo '（不含插件，App 内可导入）')"
 
 echo "==> [3/5] 打平台补丁(后台播放/锁屏控制/HTTP 允许)"
 dart "$WORK/tool/patch_platform.dart" "$WORK"

@@ -31,14 +31,22 @@ jobs:
       # 单元测试不需要 android/ios 目录,所以不必等 build.sh,也不必让 build.sh
       # 去复制 test/(它第 20 行会 rm -rf "$WORK/test",那是给构建用的干净骨架,
       # 让它带测试反而是多余的重复)。
+      # 内置源（App 内跑 MusicFree 插件）的引擎测试需要一个 Linux 原生桥接库。
+      # Android 出包那条路是 Gradle + NDK 自动编的，跟这里无关 —— 这一份只服务于
+      # `flutter test`（quickjs_engine 的 ffi.dart 在测试下要求显式给出 .so 路径）。
+      # 没有它，embedded_engine_test.dart 会整组跳过 —— 那是"假绿"，所以宁可在 CI 里
+      # 多花二十秒把它编出来，让这条链路每次都被真跑一遍。
+      - name: Build QuickJS native bridge (for engine tests)
+        run: |
+          flutter pub get --enforce-lockfile
+          bash tool/build_native.sh /tmp/mmusic-qjs
       - name: Analyze and test (fast pre-check)
         run: |
           # --enforce-lockfile:pubspec.lock 已入库,这里强制按它解析依赖。
           # 谁改了 pubspec.yaml 却忘了提交新的 lock,这一步会立刻报错,
           # 而不是悄悄换一套版本号把构建"修好"。
-          flutter pub get --enforce-lockfile
           flutter analyze lib test --no-fatal-infos --no-fatal-warnings
-          flutter test
+          LIBQUICKJSC_TEST_PATH=/tmp/mmusic-qjs/libquickjs_c_bridge_plugin.so flutter test
       # 格式卡口。加这道之前必须先在本地跑过一次 `dart format lib test`
       # 并把结果提交,否则第一次 push 就会红。
       # 用 --output=none 只检查不改文件,--set-exit-if-changed 让有差异时退出码非 0。

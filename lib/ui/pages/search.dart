@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
-import '../../core/api.dart';
 import '../../core/models.dart';
 import '../../core/search_history.dart';
+import '../../core/sources.dart';
 import '../widgets/song_tile.dart';
 
 class _SourceOption {
   final String label;
   final String? zypt; // zypt 源代码
-  final String? pluginHash; // 插件 hash
+  final String? pluginHash; // 插件 hash（服务端模式）或本地插件 id（内置源模式）
   const _SourceOption(this.label, {this.zypt, this.pluginHash});
 }
 
@@ -54,9 +54,24 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _loadSources() async {
+    if (isEmbeddedMode) {
+      // 内置源：选项就是本机已启用的插件（"全部音源" = 一起搜）
+      final opts = <_SourceOption>[const _SourceOption('全部音源')];
+      for (final p in embeddedSource.usable) {
+        opts.add(_SourceOption(p.displayName, pluginHash: p.hash));
+      }
+      if (mounted) {
+        setState(() {
+          _options = opts;
+          if (_optIndex >= _options.length) _optIndex = 0;
+        });
+      }
+      return;
+    }
+
     final opts = <_SourceOption>[const _SourceOption('默认')];
     try {
-      final plugins = await api.plugins();
+      final plugins = await musicSource.plugins();
       for (final p in plugins) {
         if (p.hash.isNotEmpty) {
           opts.add(_SourceOption(p.platform, pluginHash: p.hash));
@@ -66,7 +81,12 @@ class _SearchPageState extends State<SearchPage> {
     for (final code in zyptSources) {
       opts.add(_SourceOption(zyptName(code), zypt: code));
     }
-    if (mounted) setState(() => _options = opts);
+    if (mounted) {
+      setState(() {
+        _options = opts;
+        if (_optIndex >= _options.length) _optIndex = 0;
+      });
+    }
   }
 
   Future<void> _search() async {
@@ -84,7 +104,7 @@ class _SearchPageState extends State<SearchPage> {
     });
     try {
       final opt = _options[_optIndex];
-      final r = await api.search(q,
+      final r = await musicSource.search(q,
           page: 1, source: opt.zypt, pluginHash: opt.pluginHash);
       if (!mounted) return;
       setState(() {
@@ -108,7 +128,7 @@ class _SearchPageState extends State<SearchPage> {
     _loadingMore = true;
     try {
       final opt = _options[_optIndex];
-      final r = await api.search(q,
+      final r = await musicSource.search(q,
           page: _page + 1, source: opt.zypt, pluginHash: opt.pluginHash);
       if (!mounted) return;
       setState(() {
@@ -256,6 +276,26 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           const Divider(height: 1),
+          // 内置源并行搜多个插件时，**部分插件失败**不该让整次搜索失败，
+          // 但也不能一声不吭 —— 否则用户只会觉得"这个源结果怎么变少了"。
+          // 这里把失败的那几个源如实摆出来。
+          if (isEmbeddedMode)
+            ValueListenableBuilder<List<String>>(
+              valueListenable: embeddedSource.lastIssues,
+              builder: (context, issues, _) {
+                if (issues.isEmpty) return const SizedBox.shrink();
+                return Container(
+                  width: double.infinity,
+                  color: const Color(0xFFFFF6E5),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  child: Text(
+                    '${issues.length} 个音源本次没返回结果：\n${issues.join('\n')}',
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFF8A5A00), height: 1.4),
+                  ),
+                );
+              },
+            ),
           Expanded(child: _buildBody()),
         ],
       ),

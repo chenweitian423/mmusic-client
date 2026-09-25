@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/api.dart';
+import '../../core/embedded/plugin_store.dart';
 import '../../core/globals.dart';
 import '../../core/local_playlists.dart';
 import '../../core/models.dart';
 import '../../core/settings.dart';
 import '../../core/song_cache.dart';
+import '../../core/sources.dart';
+import 'plugins.dart';
 import 'settings.dart';
 import 'song_list_page.dart';
 
@@ -28,6 +31,13 @@ class _MinePageState extends State<MinePage> {
   }
 
   Future<void> _loadCollections() async {
+    // 收藏的歌单是**服务端**的能力（在网页端收藏、跨设备共享）。
+    // 内置源模式下没有服务端可问，直接置空 —— 让入口显示成"暂不支持"，
+    // 而不是转着圈等一个必然超时的请求。
+    if (!musicSource.supportsServerLibrary) {
+      if (mounted) setState(() => _collections = []);
+      return;
+    }
     try {
       final c = await api.collections();
       if (mounted) setState(() => _collections = c);
@@ -91,13 +101,18 @@ class _MinePageState extends State<MinePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                            settings.username.isEmpty
-                                ? '未登录'
-                                : settings.username,
+                            isEmbeddedMode
+                                ? '内置源模式'
+                                : (settings.username.isEmpty
+                                    ? '未登录'
+                                    : settings.username),
                             style: const TextStyle(
                                 fontSize: 17, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 3),
-                        Text(settings.serverUrl,
+                        Text(
+                            isEmbeddedMode
+                                ? '${pluginStore.enabled.length} 个插件 · 不依赖服务器'
+                                : settings.serverUrl,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -317,6 +332,44 @@ class _MinePageState extends State<MinePage> {
               ),
             ),
             const SizedBox(height: 12),
+            // 内置源的「插件管理」入口。放在这里而不是设置深处：
+            // 内置源模式下换插件是常事（插件失效换一个源），两步能到才叫常用功能。
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: kRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.extension_rounded, color: kRed),
+                ),
+                title: const Text('插件管理',
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  isEmbeddedMode
+                      ? '${pluginStore.enabled.length}/${pluginStore.plugins.value.length} 个已启用'
+                      : '管理本机插件（当前用的是服务端）',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                trailing:
+                    const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                onTap: () async {
+                  await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PluginsPage()));
+                  if (mounted) setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
             // 收藏的歌单
             Container(
               decoration: BoxDecoration(
@@ -341,7 +394,10 @@ class _MinePageState extends State<MinePage> {
                   else if (_collections!.isEmpty)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      child: Text('还没有收藏歌单(可在网页端收藏)',
+                      child: Text(
+                          isEmbeddedMode
+                              ? '内置源模式暂不支持收藏歌单（它保存在服务器上，可切回服务端模式查看）'
+                              : '还没有收藏歌单(可在网页端收藏)',
                           style: TextStyle(
                               fontSize: 12, color: Colors.grey.shade500)),
                     )

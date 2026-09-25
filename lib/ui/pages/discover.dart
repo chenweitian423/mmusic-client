@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../core/api.dart';
 import '../../core/models.dart';
+import '../../core/sources.dart';
 import '../widgets/cover.dart';
 import 'search.dart';
 import 'song_list_page.dart';
@@ -40,15 +41,18 @@ class _DiscoverPageState extends State<DiscoverPage> {
     // 推荐歌单:找一个支持歌单搜索的插件
     () async {
       try {
-        final plugins = await api.plugins();
+        final plugins = await musicSource.plugins();
         final p = plugins.firstWhere(
           (e) => e.searchTypes.contains('sheet'),
           orElse: () => plugins.isNotEmpty
               ? plugins.first
               : PluginInfo(platform: '', hash: '', searchTypes: const []),
         );
-        if (p.hash.isEmpty) throw ApiException('服务器没有可用插件');
-        final sheets = await api.searchSheets(_keyword, pluginHash: p.hash);
+        if (p.hash.isEmpty) {
+          throw ApiException(isEmbeddedMode ? '没有可用的内置插件' : '服务器没有可用插件');
+        }
+        final sheets =
+            await musicSource.searchSheets(_keyword, pluginHash: p.hash);
         if (mounted) setState(() => _sheets = sheets);
       } catch (e) {
         if (mounted) {
@@ -62,7 +66,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     // 排行榜预览
     () async {
       try {
-        final boards = await api.boards('wy');
+        final boards = await musicSource.boards('wy');
         if (mounted) setState(() => _boards = boards.take(6).toList());
       } catch (_) {
         if (mounted) setState(() => _boards = []);
@@ -178,7 +182,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                                 builder: (_) => SongListPage(
                                   title: b.name,
                                   showIndex: true,
-                                  loader: () => api.boardSongs('wy', b.bangid),
+                                  loader: () =>
+                                      musicSource.boardSongs('wy', b.bangid),
                                 ),
                               ));
                             },
@@ -242,7 +247,7 @@ class _SheetCard extends StatelessWidget {
             title: sheet.title,
             coverUrl: sheet.artwork,
             subtitle: sheet.artist.isEmpty ? null : 'by ${sheet.artist}',
-            loader: () => api.sheetDetail(sheet),
+            loader: () => musicSource.sheetDetail(sheet),
           ),
         ));
       },

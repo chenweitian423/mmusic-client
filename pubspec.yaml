@@ -1,7 +1,7 @@
 name: mmusic_client
 description: mmusic 自建音乐服务手机客户端(网易云风格)
 publish_to: 'none'
-version: 1.0.14
+version: 1.0.15
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -16,6 +16,12 @@ dependencies:
   shared_preferences: ^2.3.2
   cached_network_image: ^3.4.1
   path_provider: ^2.1.5
+  # 「内置源」用：在 App 里直接跑 MusicFree 插件（QuickJS-NG，全平台同一引擎）。
+  # 选它而不是 flutter_js：后者 Android 用 2021 年 QuickJS、iOS 用 JavaScriptCore，
+  # 双引擎行为不一致 —— 插件在一种上能跑在另一种上崩，是最难查的那类问题。
+  quickjs_engine: ^0.1.5
+  # 插件 id = 插件源码 SHA256（与服务端的插件 hash 同构）
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +39,11 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon.png
+    # 插件宿主环境（require 垫片 / axios 垫片 / 插件加载器）
+    - assets/js/
+    # 插件依赖的纯 JS 模块产物（由 tool/fetch_gen.sh 生成，版本全部钉死）
+    - assets/gen/
+    # 随包内置的插件。⚠️ 目录里只会有一个 .gitkeep：
+    # 插件是**插件作者**的 jsjiami 混淆产物，不进任何仓库/交付物；
+    # 本地想打一个"开箱自带插件"的包，把 .js 丢进这个目录再构建即可。
+    - assets/plugins/

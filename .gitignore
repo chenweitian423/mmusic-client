@@ -18,3 +18,8 @@ app_build/
 
 .DS_Store
 Thumbs.db
+
+# 随包插件目录：目录本身要存在(pubspec 里声明了它作为 asset 目录),
+# 但**里面的插件不进仓库** —— 那是插件作者(公众号:科技长青)的 jsjiami 混淆产物，
+# 公开仓库(=分发)不该带它。想打一个"开箱自带插件"的包，本地把 .js 丢进去再构建。
+assets/plugins/*.js

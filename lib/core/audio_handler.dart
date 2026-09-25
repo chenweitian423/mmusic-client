@@ -8,6 +8,7 @@ import 'package:just_audio/just_audio.dart';
 import 'api.dart';
 import 'models.dart';
 import 'song_cache.dart';
+import 'sources.dart';
 
 enum PlayMode { sequence, one, shuffle }
 
@@ -244,7 +245,9 @@ class MusicHandler extends BaseAudioHandler with SeekHandler {
       if (cachedPath != null) {
         await player.setFilePath(cachedPath);
       } else {
-        final url = await api.playUrl(song);
+        // 走当前音源：服务端模式是 NAS 的 /proxy|/media-source，
+        // 内置源模式是本地 JS 插件直接算出上游直链（少一跳，首播更快）。
+        final url = await musicSource.playUrl(song);
         if (seq != _loadSeq) return;
         await player.setUrl(url);
       }

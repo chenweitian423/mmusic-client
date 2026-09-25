@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'models.dart';
 import 'settings.dart';
+import 'sources.dart';
 
 String cacheFileBaseName(String key) {
   var hash = 0xcbf29ce484222325;
@@ -94,7 +95,8 @@ class SongCacheStore {
       return existing.path;
     }
 
-    final url = await api.playUrl(song);
+    // 走当前音源（服务端 or 内置插件）取直链 —— 缓存功能两种模式都要能用
+    final url = await musicSource.playUrl(song);
     final dio = Dio(BaseOptions(
       followRedirects: true,
       responseType: ResponseType.stream,

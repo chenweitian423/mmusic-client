@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/api.dart';
+import '../../core/music_source.dart';
 import '../../core/settings.dart';
+import '../../core/sources.dart';
 
 class ServerSetupPage extends StatefulWidget {
   const ServerSetupPage({super.key});
@@ -109,6 +111,20 @@ class _ServerSetupPageState extends State<ServerSetupPage> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
                       : const Text('连接服务器', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // 没有 NAS 也能用：切到内置源，插件在手机里跑。
+              // 这条路径是这个版本新开的，摆在第一次配置页上才有人知道它存在。
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await setSourceMode(SourceKind.embedded);
+                    if (!context.mounted) return;
+                    restartToGate(context);
+                  },
+                  icon: const Icon(Icons.phone_android_rounded, size: 18),
+                  label: const Text('没有服务器？改用内置源'),
                 ),
               ),
             ],
