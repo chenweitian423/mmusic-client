@@ -7,7 +7,12 @@ import 'settings.dart';
 
 class ApiException implements Exception {
   final String message;
-  ApiException(this.message);
+
+  /// 更细的技术信息(尝试次数、各状态码计数),给界面上的"详情"用。
+  final String? detail;
+
+  ApiException(this.message, {this.detail});
+
   @override
   String toString() => message;
 }
@@ -218,6 +223,139 @@ String _mediaSourceQuality(String br) {
   }
 }
 
+/// 取播放直链时的探测记录。
+///
+/// 为什么需要它:[playUrl] 要把「音源 × 音质 × id 候选 × 两种路由」几十种组合
+/// 全试一遍,每一步的失败原先都被 `catch (_) {}` 吞掉,最后只剩一句
+/// 「无法获取播放地址」—— 用户看不懂,排查的人也无从下手。
+/// 这个类把每一步的结果攒起来,最后翻成一句**可行动**的话。
+///
+/// 判据来自 AGENTS.md §8.8 那类真实故障:插件失效(中转站改了接口路径)时
+/// 服务端一切正常、只是取不到直链,而这在旧实现下和「服务器挂了」长得一模一样。
+class PlayUrlProbe {
+  /// 发起的请求总数(含成功那次)。
+  int attempts = 0;
+
+  /// 401 / 403:服务端收到了请求但不给数据,基本等于登录过期。
+  int unauthorized = 0;
+
+  /// 404:音源名或接口路径不对。
+  int notFound = 0;
+
+  /// 其它 4xx。
+  int badRequest = 0;
+
+  /// 200 但响应里没有可用地址:服务端活着,只是这组参数给不出直链。
+  int emptyBody = 0;
+
+  /// 网络层异常(连不上 / 超时)。
+  int networkErrors = 0;
+
+  /// 非网络层的其它异常。
+  int otherErrors = 0;
+
+  /// 最近一次异常的描述。
+  String lastError = '';
+
+  /// 最近一次看到的状态码。
+  int? lastStatus;
+
+  void recordResponse(int? status) {
+    attempts++;
+    lastStatus = status;
+    if (status == null) return;
+    if (status == 401 || status == 403) {
+      unauthorized++;
+    } else if (status == 404) {
+      notFound++;
+    } else if (status >= 400) {
+      badRequest++;
+    }
+  }
+
+  /// 200 但取不到地址。
+  void recordEmptyBody() => emptyBody++;
+
+  void recordError(Object e) {
+    attempts++;
+    lastError = shortErrorText(e);
+    if (_isNetworkError(e)) {
+      networkErrors++;
+    } else {
+      otherErrors++;
+    }
+  }
+
+  /// 面向用户的一句话原因(按"用户能做什么"排序,而不是按发生次数)。
+  String describe(int sourceCount) {
+    if (attempts == 0) {
+      return '没有可用的音源';
+    }
+    if (unauthorized > 0) {
+      return '登录已过期,请重新登录';
+    }
+    if (networkErrors == attempts) {
+      return '连不上服务端($lastError)';
+    }
+    if (emptyBody > 0) {
+      return '服务端正常,但 $sourceCount 个音源都没给出播放地址(多半是插件失效)';
+    }
+    if (notFound > 0) {
+      return '服务端返回 404:音源名或接口路径不对';
+    }
+    if (badRequest > 0) {
+      return '服务端拒绝了请求(HTTP $lastStatus)';
+    }
+    if (networkErrors > 0) {
+      return '网络不稳定($lastError)';
+    }
+    if (otherErrors > 0) {
+      return '请求出错($lastError)';
+    }
+    return '取不到播放地址';
+  }
+
+  /// 给「详情」用的技术摘要。
+  String get summary {
+    final parts = <String>[];
+    if (unauthorized > 0) parts.add('401/403×$unauthorized');
+    if (notFound > 0) parts.add('404×$notFound');
+    if (badRequest > 0) parts.add('4xx×$badRequest');
+    if (emptyBody > 0) parts.add('空应答×$emptyBody');
+    if (networkErrors > 0) parts.add('网络异常×$networkErrors');
+    if (otherErrors > 0) parts.add('其它异常×$otherErrors');
+    final tail = parts.isEmpty ? '无响应记录' : parts.join(' / ');
+    return '共尝试 $attempts 次:$tail';
+  }
+
+  static bool _isNetworkError(Object e) {
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.connectionError:
+          return true;
+        default:
+          return false;
+      }
+    }
+    final s = e.toString().toLowerCase();
+    return s.contains('socket') ||
+        s.contains('timeout') ||
+        s.contains('connection');
+  }
+}
+
+/// 把异常压成一小段人话,塞进上面的文案里(+ 避免把整个 DioException 堆栈铺到界面上)。
+String shortErrorText(Object e) {
+  var s = e.toString();
+  final nl = s.indexOf('\n');
+  if (nl > 0) s = s.substring(0, nl);
+  if (s.length > 80) s = '${s.substring(0, 77)}...';
+  return s;
+}
+
 class Api {
   Dio _dio = Dio();
   List<PluginInfo>? _pluginCache;
@@ -363,25 +501,33 @@ class Api {
   }
 
   Future<String> playUrl(Song song) async {
-    final sources = await _sourceCandidates(song);
+    final probe = PlayUrlProbe();
+    final sources = await _sourceCandidates(song, probe);
     for (final source in sources) {
       for (final br in _brCandidates()) {
-        final proxyUrl = await _playUrlViaProxy(song, source, br);
+        final proxyUrl = await _playUrlViaProxy(song, source, br, probe);
         if (proxyUrl.isNotEmpty) return proxyUrl;
 
-        final mediaSourceUrl = await _playUrlViaMediaSource(song, source, br);
+        final mediaSourceUrl =
+            await _playUrlViaMediaSource(song, source, br, probe);
         if (mediaSourceUrl.isNotEmpty) return mediaSourceUrl;
       }
     }
-    throw ApiException('无法获取播放地址');
+    // 旧实现只抛一句"无法获取播放地址",用户和排查者都看不出区别;
+    // 现在带上 probe 归类出来的原因 + 计数摘要(界面会展示,见 audio_handler)。
+    throw ApiException(probe.describe(sources.length), detail: probe.summary);
   }
 
-  Future<List<String>> _sourceCandidates(Song song) async {
+  Future<List<String>> _sourceCandidates(Song song, PlayUrlProbe probe) async {
     if (zyptSources.contains(song.source)) {
       try {
         final list = _pluginCache ?? await plugins();
         return sourceCandidatesForSong(song, list);
-      } catch (_) {}
+      } catch (e) {
+        // 插件列表拿不到(常见于服务端连不上)也要记账,否则这里会静默退回短码,
+        // 最终报错里就看不出"其实是服务端没响应"。
+        probe.recordError(e);
+      }
     }
     return [song.source];
   }
@@ -390,20 +536,30 @@ class Api {
     Song song,
     String source,
     String br,
+    PlayUrlProbe probe,
   ) async {
     for (final body in mediaSourceBodies(song, br, source)) {
       try {
         final r = await _dio.post('/media-source', data: body);
+        probe.recordResponse(r.statusCode);
         if (r.statusCode == 200) {
           final url = extractPlayableUrl(r.data);
           if (url.isNotEmpty) return url;
+          probe.recordEmptyBody();
         }
-      } catch (_) {}
+      } catch (e) {
+        probe.recordError(e);
+      }
     }
     return '';
   }
 
-  Future<String> _playUrlViaProxy(Song song, String source, String br) async {
+  Future<String> _playUrlViaProxy(
+    Song song,
+    String source,
+    String br,
+    PlayUrlProbe probe,
+  ) async {
     for (final id in proxyIdCandidates(song)) {
       for (final params in [
         proxyUrlParams(song, id, null, source),
@@ -411,11 +567,15 @@ class Api {
       ]) {
         try {
           final r = await _dio.get('/proxy', queryParameters: params);
+          probe.recordResponse(r.statusCode);
           if (r.statusCode == 200) {
             final url = extractPlayableUrl(r.data);
             if (url.isNotEmpty) return url;
+            probe.recordEmptyBody();
           }
-        } catch (_) {}
+        } catch (e) {
+          probe.recordError(e);
+        }
       }
     }
     return '';

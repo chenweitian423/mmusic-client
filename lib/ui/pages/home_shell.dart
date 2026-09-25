@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../core/globals.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/playback_failure_bar.dart';
 import 'boards.dart';
 import 'discover.dart';
 import 'mine.dart';
@@ -21,21 +22,6 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     favorites.load();
-    // 播放失败提示
-    musicHandler.errorN.addListener(_onPlayError);
-  }
-
-  @override
-  void dispose() {
-    musicHandler.errorN.removeListener(_onPlayError);
-    super.dispose();
-  }
-
-  void _onPlayError() {
-    final msg = musicHandler.errorN.value;
-    if (msg.isEmpty || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
   }
 
   @override
@@ -52,6 +38,10 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 播放失败时在这里常驻一条可重试的提示。
+          // (原来是监听 musicHandler.errorN 弹一个 2 秒的 SnackBar,失败一旦发生在
+          //  用户没看屏幕的时候就会错过,已改成常驻组件。)
+          const PlaybackFailureBar(),
           const MiniPlayer(),
           BottomNavigationBar(
             currentIndex: _tab,

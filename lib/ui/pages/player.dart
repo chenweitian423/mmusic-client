@@ -13,6 +13,7 @@ import '../../core/models.dart';
 import '../../core/settings.dart';
 import '../widgets/cover.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/playback_failure_bar.dart';
 
 /// 全屏播放页(封面盘 / 歌词 双页切换)
 class PlayerPage extends StatefulWidget {
@@ -96,6 +97,9 @@ class _PlayerPageState extends State<PlayerPage> {
                         const SizedBox(width: 48),
                       ],
                     ),
+                    // 播放失败时常驻提示(深色配色):用户点进全屏播放页,
+                    // 最常见的诉求就是"为什么没声音",提示得摆在这里。
+                    const PlaybackFailureBar(onDark: true),
                     // 主体:封面盘 / 歌词
                     Expanded(
                       child: GestureDetector(
