@@ -14,12 +14,17 @@ jobs:
           flutter-version: '3.32.0'
           channel: stable
       # 快速静态检查:约 1 分钟内挡掉编译错误,避免白跑 10 分钟的完整构建。
-      # 只查 lib/(即真正会被编译进 App 的代码),且只有 error 级别才失败,
-      # warning / info 不阻塞构建,免得被历史遗留的风格问题卡住。
+      # 查 lib/ + test/(下面还有一道 dart format 卡口也覆盖这两处)。只有 error
+      # 级别才失败,warning / info 不阻塞构建,免得被历史遗留的风格问题卡住。
       #
       # 2026-09-25 起基线已是 `No issues found!`(补上 analysis_options.yaml 后
       # 清完了全部存量告警),所以往后任何一条新告警都值得看一眼。
       # 想收紧成严格模式,把下面两个 --no-fatal-* 去掉即可。
+      #
+      # 2026-09-25 把范围从 lib 扩到 lib test:当初只查 lib 是怕 test/ 从没被
+      # 编译过、纳入会让检查"上线即失败";但 flutter test 自 2026-08-14 起就在
+      # CI 里跑通(证明 test/ 至少能编译),且本地实测 `flutter analyze lib test`
+      # 同样是 No issues found!,所以这个顾虑已经不成立。
       #
       # 注意:这里是在仓库根目录跑,不是在 build.sh 生成的 app_build 里。
       # 仓库根目录本身就是个合法的 Flutter 包(有 pubspec.yaml + lib/ + test/),
@@ -32,7 +37,7 @@ jobs:
           # 谁改了 pubspec.yaml 却忘了提交新的 lock,这一步会立刻报错,
           # 而不是悄悄换一套版本号把构建"修好"。
           flutter pub get --enforce-lockfile
-          flutter analyze lib --no-fatal-infos --no-fatal-warnings
+          flutter analyze lib test --no-fatal-infos --no-fatal-warnings
           flutter test
       # 格式卡口。加这道之前必须先在本地跑过一次 `dart format lib test`
       # 并把结果提交,否则第一次 push 就会红。

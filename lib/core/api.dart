@@ -356,6 +356,27 @@ String shortErrorText(Object e) {
   return s;
 }
 
+/// 音质降级顺序。
+///
+/// 用户设了哪档就把它排在最前,后面按"尽量接近"的顺序兜底。
+/// ⚠️ 注意 `192` / `128` 两档**不含 `flac`** —— 用户明确选了低音质,不该为了取到直链
+/// 偷偷拉起几十 MB 的无损流(§3.3 那张表就是这么定的,别"顺手补齐")。
+///
+/// 抽成顶层函数纯粹是为了能单测:这张表写错的后果是"音质设置不生效"或
+/// "悄悄跑掉数倍流量",两者在界面上都看不出来。
+List<String> brCandidatesFor(String quality) {
+  switch (quality) {
+    case '999':
+      return ['999', 'flac', '320', '192', '128'];
+    case '128':
+      return ['128', '192', '320', '999'];
+    case '192':
+      return ['192', '320', '128', '999'];
+    default:
+      return ['320', '192', '999', 'flac', '128'];
+  }
+}
+
 class Api {
   Dio _dio = Dio();
   List<PluginInfo>? _pluginCache;
@@ -487,24 +508,11 @@ class Api {
 
   // ---------- 播放地址 / 歌词 ----------
 
-  List<String> _brCandidates() {
-    switch (settings.quality) {
-      case '999':
-        return ['999', 'flac', '320', '192', '128'];
-      case '128':
-        return ['128', '192', '320', '999'];
-      case '192':
-        return ['192', '320', '128', '999'];
-      default:
-        return ['320', '192', '999', 'flac', '128'];
-    }
-  }
-
   Future<String> playUrl(Song song) async {
     final probe = PlayUrlProbe();
     final sources = await _sourceCandidates(song, probe);
     for (final source in sources) {
-      for (final br in _brCandidates()) {
+      for (final br in brCandidatesFor(settings.quality)) {
         final proxyUrl = await _playUrlViaProxy(song, source, br, probe);
         if (proxyUrl.isNotEmpty) return proxyUrl;
 

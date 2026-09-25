@@ -236,4 +236,29 @@ void main() {
     expect(params['albumName'], '电影《罗小黑战记2》');
     expect(params.containsKey('br'), isFalse);
   });
+
+  // 音质降级表(AGENTS.md §3.3 那张表)。表写错的后果是"音质设置不生效"或
+  // "悄悄跑掉数倍流量",两者在界面上都看不出来,所以顺序必须钉死。
+  group('brCandidatesFor —— 音质降级顺序', () {
+    test('999(最高档)把无损排在最前', () {
+      expect(brCandidatesFor('999'), ['999', 'flac', '320', '192', '128']);
+    });
+
+    test('192 / 128 两档都不含 flac —— 选了低音质就不该偷偷拉无损流', () {
+      expect(brCandidatesFor('192'), ['192', '320', '128', '999']);
+      expect(brCandidatesFor('192'), isNot(contains('flac')));
+      expect(brCandidatesFor('128'), ['128', '192', '320', '999']);
+      expect(brCandidatesFor('128'), isNot(contains('flac')));
+    });
+
+    test('默认档 320 排第一(settings.quality 的默认值就是 320)', () {
+      expect(brCandidatesFor('320'), ['320', '192', '999', 'flac', '128']);
+    });
+
+    test('未知取值走默认分支,绝不返回空列表(否则一次都不尝试)', () {
+      expect(brCandidatesFor('unknown'), brCandidatesFor('320'));
+      expect(brCandidatesFor(''), brCandidatesFor('320'));
+      expect(brCandidatesFor('unknown'), isNotEmpty);
+    });
+  });
 }
